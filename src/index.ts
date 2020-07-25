@@ -53,7 +53,60 @@ export interface Pagination {
 export interface Searchable extends Pagination, Sortable {
 
 }
-export function reset(com: Searchable) {
+// m is search model or an object which is parsed from url
+export function initSearchable(m: any, com: Searchable): any {
+  if (!isNaN(m.page)) {
+    const page = parseInt(m.page, 10);
+    m.page = page;
+    if (page >= 1) {
+      com.pageIndex = page;
+    }
+  }
+  if (!isNaN(m.limit)) {
+    const pageSize = parseInt(m.limit, 10);
+    m.limit = pageSize;
+    if (pageSize > 0) {
+      com.pageSize = pageSize;
+    }
+  }
+  if (!m.limit && com.pageSize) {
+    m.limit = com.pageSize;
+  }
+  if (!isNaN(m.firstLimit)) {
+    const initPageSize = parseInt(m.firstLimit, 10);
+    if (initPageSize > 0) {
+      m.firstLimit = initPageSize;
+      com.initPageSize = initPageSize;
+    } else {
+      com.initPageSize = com.pageSize;
+    }
+  } else {
+    com.initPageSize = com.pageSize;
+  }
+  const st = m.sort;
+  if (st && st.length > 0) {
+    const ch = st.charAt(0);
+    if (ch === '+' || ch === '-') {
+      com.sortField = st.substring(1);
+      com.sortType = ch;
+    } else {
+      com.sortField = st;
+      com.sortType = '';
+    }
+  }
+  /*
+  delete searchModel.page;
+  delete searchModel.limit;
+  delete searchModel.firstLimit;
+  */
+  return m;
+}
+export function more(com: Pagination): void {
+  com.append = true;
+  com.pageIndex = com.pageIndex + 1;
+}
+
+export function reset(com: Searchable): void {
   removeSortStatus(com.sortTarget);
   com.sortTarget = null;
   com.sortField = null;
@@ -99,7 +152,7 @@ export function append<T>(list: T[], results: T[]): T[] {
   }
   return list;
 }
-export function showResults<T>(s: SearchModel, sr: SearchResult<T>, com: Pagination) {
+export function showResults<T>(s: SearchModel, sr: SearchResult<T>, com: Pagination): void {
   com.pageIndex = (s.page && s.page >= 1 ? s.page : 1);
   if (sr.total) {
     com.itemTotal = sr.total;
@@ -110,7 +163,7 @@ export function showResults<T>(s: SearchModel, sr: SearchResult<T>, com: Paginat
     handleAppend(s, sr, com);
   }
 }
-export function handleAppend<T, S extends SearchModel>(s: S, sr: SearchResult<T>, com: Pagination) {
+export function handleAppend<T, S extends SearchModel>(s: S, sr: SearchResult<T>, com: Pagination): void {
   if (s.limit === 0) {
     com.appendable = false;
   } else {
@@ -156,7 +209,7 @@ export function getDisplayFields(form: any): string[] {
   return fields;
 }
 
-export function formatResults<T>(results: T[], formatter: LocaleFormatter<T>, locale: Locale, sequenceNo: string, pageIndex: number, pageSize: number, initPageSize: number) {
+export function formatResults<T>(results: T[], formatter: LocaleFormatter<T>, locale: Locale, sequenceNo: string, pageIndex: number, pageSize: number, initPageSize: number): void {
   if (results && results.length > 0) {
     let hasSequencePro = false;
     if (formatter) {
@@ -190,7 +243,7 @@ export function formatResults<T>(results: T[], formatter: LocaleFormatter<T>, lo
   }
 }
 
-export function getPageTotal(recordTotal: number, pageSize: number) {
+export function getPageTotal(recordTotal: number, pageSize: number): number {
   if (pageSize <= 0) {
     return 1;
   } else {
@@ -222,13 +275,13 @@ export function buildSearchMessage<T>(s: SearchModel, sr: SearchResult<T>, r: Re
   }
 }
 
-function removeFormatUrl(url: string) {
+function removeFormatUrl(url: string): string {
   const startParams = url.indexOf('?');
   return startParams !== -1 ? url.substring(0, startParams) : url;
 }
 
 
-export function addParametersIntoUrl<S extends SearchModel>(searchModel: S, isFirstLoad: boolean) {
+export function addParametersIntoUrl<S extends SearchModel>(searchModel: S, isFirstLoad: boolean): void {
   if (!isFirstLoad) {
     const pageIndex = searchModel.page;
     if (pageIndex && !isNaN(pageIndex) && pageIndex <= 1) {
@@ -312,7 +365,7 @@ export interface Sort {
   type: string;
 }
 
-export function handleSortEvent(event: any, com: Sortable) {
+export function handleSortEvent(event: any, com: Sortable): void {
   if (event && event.target) {
     const target = event.target;
     const s = handleSort(target, com.sortTarget, com.sortField, com.sortType);

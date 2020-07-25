@@ -1,6 +1,6 @@
 {
   "name": "search-utilities",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "search utilities",
   "main": "./lib/index.js",
   "types": "./src/index.ts",
@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com/common-ts/search"
+    "url": "git@github.com/common-ts/search-utilities"
   },
   "keywords": [
     "search",
