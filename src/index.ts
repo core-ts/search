@@ -51,8 +51,56 @@ export interface Pagination {
 }
 
 export interface Searchable extends Pagination, Sortable {
-
 }
+
+export function mergeSearchModel<S extends SearchModel>(obj: any, pageSizes?: number[], arrs?: string[]|any, b?: S) {
+  let a: any = b;
+  if (!b) {
+    a = {};
+  }
+  const slimit = obj['limit'];
+  if (!isNaN(slimit)) {
+    const limit = parseInt(slimit, 10);
+    if (pageSizes && pageSizes.length > 0) {
+      if (pageSizes.indexOf(limit) >= 0) {
+        a.limit = limit;
+      }
+    } else {
+      a.limit = limit;
+    }
+  }
+  delete obj['limit'];
+  const keys = Object.keys(obj);
+  for (const key of keys) {
+    const p = a[key];
+    const v = obj[key];
+    if (v && v !== '') {
+      a[key] = (isArray(key, p, arrs) ? v.split(',') : v);
+    }
+  }
+  return a;
+}
+export function isArray(key: string, p: any, arrs: string[]|any): boolean {
+  if (p) {
+    if (Array.isArray(p)) {
+      return true;
+    }
+  }
+  if (arrs) {
+    if (Array.isArray(arrs)) {
+      if (arrs.indexOf(key) >= 0) {
+        return true;
+      }
+    } else {
+      const v = arrs[key];
+      if (v && Array.isArray(v)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 // m is search model or an object which is parsed from url
 export function initSearchable(m: any, com: Searchable): any {
   if (!isNaN(m.page)) {
@@ -185,11 +233,17 @@ export function showPaging<T>(s: SearchModel, sr: SearchResult<T>, com: Paginati
   com.itemTotal = sr.total;
   const pageTotal = getPageTotal(sr.total, s.limit);
   com.pageTotal = pageTotal;
-  com.showPaging = (com.pageTotal <= 1 ? false : true);
+  com.showPaging = (com.pageTotal <= 1 || (sr.results && sr.results.length >= sr.total) ? false : true);
 }
 
 export function getDisplayFields(form: any): string[] {
-  const nodes = form.nextSibling;
+  let nodes = form.nextSibling;
+  if (!nodes.querySelector) {
+    nodes = form.nextSibling.nextSibling;
+  }
+  if (!nodes.querySelector) {
+    return [];
+  }
   const table = nodes.querySelector('table');
   const fields: string[] = [];
   if (table) {
