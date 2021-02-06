@@ -26,16 +26,19 @@ export interface Locale {
 export interface LocaleFormatter<T> {
   format(obj: T, locale: Locale): T;
 }
+interface StringMap {
+  [key: string]: string;
+}
 export interface ResourceService {
-  resource(): any;
+  resource(): StringMap;
   value(key: string, param?: any): string;
-  format(...args: any[]): string;
+  format(f: string, ...args: any[]): string;
 }
 
 export interface Sortable {
   sortField: string;
   sortType: string;
-  sortTarget: any;
+  sortTarget: HTMLElement;
 }
 
 export interface Pagination {
@@ -53,12 +56,12 @@ export interface Pagination {
 export interface Searchable extends Pagination, Sortable {
 }
 
-export function mergeSearchModel<S extends SearchModel>(obj: any, pageSizes?: number[], arrs?: string[]|any, b?: S) {
+export function mergeSearchModel<S extends SearchModel>(obj: S, pageSizes?: number[], arrs?: string[]|any, b?: S) {
   let a: any = b;
   if (!b) {
     a = {};
   }
-  const slimit = obj['limit'];
+  const slimit: any = obj['limit'];
   if (!isNaN(slimit)) {
     const limit = parseInt(slimit, 10);
     if (pageSizes && pageSizes.length > 0) {
@@ -102,16 +105,16 @@ export function isArray(key: string, p: any, arrs: string[]|any): boolean {
 }
 
 // m is search model or an object which is parsed from url
-export function initSearchable(m: any, com: Searchable): any {
+export function initSearchable<S extends SearchModel>(m: S, com: Searchable): S {
   if (!isNaN(m.page)) {
-    const page = parseInt(m.page, 10);
+    const page = parseInt(m.page as any, 10);
     m.page = page;
     if (page >= 1) {
       com.pageIndex = page;
     }
   }
   if (!isNaN(m.limit)) {
-    const pageSize = parseInt(m.limit, 10);
+    const pageSize = parseInt(m.limit as any, 10);
     m.limit = pageSize;
     if (pageSize > 0) {
       com.pageSize = pageSize;
@@ -121,7 +124,7 @@ export function initSearchable(m: any, com: Searchable): any {
     m.limit = com.pageSize;
   }
   if (!isNaN(m.firstLimit)) {
-    const initPageSize = parseInt(m.firstLimit, 10);
+    const initPageSize = parseInt(m.firstLimit as any, 10);
     if (initPageSize > 0) {
       m.firstLimit = initPageSize;
       com.initPageSize = initPageSize;
@@ -236,10 +239,10 @@ export function showPaging<T>(s: SearchModel, sr: SearchResult<T>, com: Paginati
   com.showPaging = (com.pageTotal <= 1 || (sr.results && sr.results.length >= sr.total) ? false : true);
 }
 
-export function getDisplayFields(form: any): string[] {
-  let nodes = form.nextSibling;
+export function getDisplayFields(form: HTMLFormElement): string[] {
+  let nodes = form.nextSibling as HTMLElement;
   if (!nodes.querySelector) {
-    nodes = form.nextSibling.nextSibling;
+    nodes = form.nextSibling.nextSibling as HTMLElement;
   }
   if (!nodes.querySelector) {
     return [];
@@ -251,7 +254,9 @@ export function getDisplayFields(form: any): string[] {
     if (thead) {
       const ths = thead.querySelectorAll('th');
       if (ths) {
-        for (const th of ths) {
+        const l = ths.length;
+        for (let i = 0; i < l; i++) {
+          const  th = ths[i];
           const field = th.getAttribute('data-field');
           if (field) {
             fields.push(field);
@@ -419,9 +424,9 @@ export interface Sort {
   type: string;
 }
 
-export function handleSortEvent(event: any, com: Sortable): void {
+export function handleSortEvent(event: Event, com: Sortable): void {
   if (event && event.target) {
-    const target = event.target;
+    const target = event.target as HTMLElement;
     const s = handleSort(target, com.sortTarget, com.sortField, com.sortType);
     com.sortField = s.field;
     com.sortType = s.type;
@@ -429,7 +434,7 @@ export function handleSortEvent(event: any, com: Sortable): void {
   }
 }
 
-export function handleSort(target: any, previousTarget: any, sortField: string, sortType: string): Sort {
+export function handleSort(target: HTMLElement, previousTarget: HTMLElement, sortField: string, sortType: string): Sort {
   const type = target.getAttribute('sort-type');
   const field = toggleSortStyle(target);
   const s = sort(sortField, sortType, field, type);
@@ -459,22 +464,25 @@ export function sort(preField: string, preSortType: string, field: string, sortT
   }
 }
 
-export function removeSortStatus(target: any): void {
+export function removeSortStatus(target: HTMLElement): void {
   if (target && target.children.length > 0) {
     target.removeChild(target.children[0]);
   }
 }
 
-export function toggleSortStyle(target: any): string {
+export function toggleSortStyle(target: HTMLElement): string {
   let field = target.getAttribute('data-field');
   if (!field) {
-    field = target.parentNode.getAttribute('data-field');
+    const p = target.parentNode as HTMLElement;
+    if (p) {
+      field = p.getAttribute('data-field');
+    }
   }
   if (!field || field.length === 0) {
     return '';
   }
   if (target.nodeName === 'I') {
-    target = target.parentNode;
+    target = target.parentNode as HTMLElement;
   }
   let i = null;
   if (target.children.length === 0) {
