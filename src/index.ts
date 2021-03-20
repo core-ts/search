@@ -23,9 +23,6 @@ export interface Locale {
   currencyPattern: number;
   currencySample?: string;
 }
-export interface LocaleFormatter<T> {
-  format(obj: T, locale: Locale): T;
-}
 interface StringMap {
   [key: string]: string;
 }
@@ -268,24 +265,30 @@ export function getDisplayFields(form: HTMLFormElement): string[] {
   return fields;
 }
 
-export function formatResults<T>(results: T[], formatter: LocaleFormatter<T>, locale: Locale, sequenceNo: string, pageIndex: number, pageSize: number, initPageSize: number): void {
+export function formatResults<T>(results: T[], pageIndex: number, pageSize: number, initPageSize: number, sequenceNo?: string, ft?: (oj: T, lc: Locale) => T, lc?: Locale): void {
   if (results && results.length > 0) {
     let hasSequencePro = false;
-    if (formatter) {
-      for (const obj of results) {
-        if (obj[sequenceNo]) {
-          hasSequencePro = true;
+    if (ft) {
+      if (sequenceNo && sequenceNo.length > 0) {
+        for (const obj of results) {
+          if (obj[sequenceNo]) {
+            hasSequencePro = true;
+          }
+          ft(obj, lc);
         }
-        formatter.format(obj, locale);
+      } else {
+        for (const obj of results) {
+          ft(obj, lc);
+        }
       }
-    } else {
+    } else if (sequenceNo && sequenceNo.length > 0) {
       for (const obj of results) {
         if (obj[sequenceNo]) {
           hasSequencePro = true;
         }
       }
     }
-    if (!hasSequencePro) {
+    if (sequenceNo && sequenceNo.length > 0 && !hasSequencePro) {
       if (!pageIndex) {
         pageIndex = 1;
       }
