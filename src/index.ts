@@ -1,6 +1,10 @@
+// tslint:disable-next-line:class-name
+export class resources {
+  static limit = 20;
+}
 export interface SearchModel {
   page?: number;
-  limit: number;
+  limit?: number;
   firstLimit?: number;
   fields?: string[];
   sort?: string;
@@ -357,10 +361,21 @@ export function addParametersIntoUrl<S extends SearchModel>(searchModel: S, isFi
       if (objValue) {
         if (key !== 'fields') {
           if (typeof objValue === 'string' || typeof objValue === 'number') {
-            if (url.indexOf('?') === -1) {
-              url += `?${key}=${objValue}`;
+            if (key === 'limit') {
+              // tslint:disable-next-line:triple-equals
+              if (objValue != resources.limit) {
+                if (url.indexOf('?') === -1) {
+                  url += `?${key}=${objValue}`;
+                } else {
+                  url += `&${key}=${objValue}`;
+                }
+              }
             } else {
-              url += `&${key}=${objValue}`;
+              if (url.indexOf('?') === -1) {
+                url += `?${key}=${objValue}`;
+              } else {
+                url += `&${key}=${objValue}`;
+              }
             }
           } else if (typeof objValue === 'object') {
             if (objValue instanceof Date) {
