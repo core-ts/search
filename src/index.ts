@@ -268,7 +268,16 @@ export function getDisplayFields(form: HTMLFormElement): string[] {
   }
   return fields;
 }
-
+interface Component<T> {
+  pageIndex: number;
+  pageSize: number;
+  initPageSize: number;
+  sequenceNo?: string;
+  format?: (oj: T, lc: Locale) => T;
+}
+export function formatResultsByComponent<T>(results: T[], c: Component<T>, lc: Locale) {
+  formatResults(results, c.pageIndex, c.pageSize, c.initPageSize, c.sequenceNo, c.format, lc);
+}
 export function formatResults<T>(results: T[], pageIndex: number, pageSize: number, initPageSize: number, sequenceNo?: string, ft?: (oj: T, lc: Locale) => T, lc?: Locale): void {
   if (results && results.length > 0) {
     let hasSequencePro = false;
@@ -516,4 +525,51 @@ export function toggleSortStyle(target: HTMLElement): string {
     }
   }
   return field;
+}
+export function getModel<T, S extends SearchModel>(state: any, modelName: string, searchable: Searchable, fields: string[], excluding: any, keys?: string[], l?: T[], f?: HTMLFormElement, dc?: (f2: HTMLFormElement, lc2?: Locale, cc?: string) => any, lc?: Locale, currencyCode?: string): S {
+  let obj2 = getModelFromState(state, modelName);
+  if (f && dc) {
+    obj2 = dc(f, lc, currencyCode);
+  }
+  const obj: any = obj2 ? obj2 : {};
+  const obj3 = optimizeSearchModel(obj, searchable, fields);
+  obj3.excluding = excluding;
+  if (keys && keys.length === 1) {
+    if (l && l.length > 0) {
+      const refId = l[l.length - 1][this.keys[0]];
+      if (refId) {
+        obj3.refId = '' + refId;
+      }
+    }
+  }
+  return obj3;
+}
+function getModelFromState(state: any, modelName: string): any {
+  if (!modelName || modelName.length === 0) {
+    return state;
+  }
+  if (!state) {
+    return state;
+  }
+  return state[modelName];
+}
+export function getDisplayFieldsFromForm(displayFields: string[], initDisplayFields?: boolean, form?: HTMLFormElement): string[] {
+  if (displayFields) {
+    return displayFields;
+  }
+  if (!initDisplayFields) {
+    if (form) {
+      displayFields = getDisplayFields(form);
+    }
+  }
+  return displayFields;
+}
+export function validate<S extends SearchModel>(se: S, callback: () => void, form?: HTMLFormElement, lc?: Locale, vf?: (f: HTMLFormElement, lc2?: Locale, focus?: boolean, scr?: boolean) => boolean): void {
+  let valid = true;
+  if (form && vf) {
+    valid = vf(form, lc);
+  }
+  if (valid === true) {
+    callback();
+  }
 }
