@@ -27,37 +27,33 @@ export interface Locale {
   currencyPattern: number;
   currencySample?: string;
 }
-interface StringMap {
-  [key: string]: string;
-}
 export interface ResourceService {
-  resource(): StringMap;
   value(key: string, param?: any): string;
   format(f: string, ...args: any[]): string;
 }
 
 export interface Sortable {
-  sortField: string;
-  sortType: string;
-  sortTarget: HTMLElement;
+  sortField?: string;
+  sortType?: string;
+  sortTarget?: HTMLElement;
 }
 
 export interface Pagination {
-  initPageSize: number;
-  pageSize: number;
-  pageIndex: number;
-  itemTotal: number;
-  pageTotal: number;
-  showPaging: boolean;
-  append: boolean;
-  appendMode: boolean;
-  appendable: boolean;
+  initPageSize?: number;
+  pageSize?: number;
+  pageIndex?: number;
+  itemTotal?: number;
+  pageTotal?: number;
+  showPaging?: boolean;
+  append?: boolean;
+  appendMode?: boolean;
+  appendable?: boolean;
 }
 
 export interface Searchable extends Pagination, Sortable {
 }
 
-export function mergeSearchModel<S extends SearchModel>(obj: S, pageSizes?: number[], arrs?: string[]|any, b?: S) {
+export function mergeSearchModel<S extends SearchModel>(obj: S, b?: S, pageSizes?: number[], arrs?: string[]|any) {
   let a: any = b;
   if (!b) {
     a = {};
@@ -269,9 +265,9 @@ export function getDisplayFields(form: HTMLFormElement): string[] {
   return fields;
 }
 interface Component<T> {
-  pageIndex: number;
-  pageSize: number;
-  initPageSize: number;
+  pageIndex?: number;
+  pageSize?: number;
+  initPageSize?: number;
   sequenceNo?: string;
   format?: (oj: T, lc: Locale) => T;
 }
