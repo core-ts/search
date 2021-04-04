@@ -301,13 +301,22 @@ export function formatResults<T>(results: T[], pageIndex: number, pageSize: numb
       if (!pageIndex) {
         pageIndex = 1;
       }
-      if (pageIndex <= 1) {
-        for (let i = 0; i < results.length; i++) {
-          results[i][sequenceNo] = i - pageSize + pageSize * pageIndex + 1;
+      if (pageSize) {
+        if (!initPageSize) {
+          initPageSize = pageSize;
+        }
+        if (pageIndex <= 1) {
+          for (let i = 0; i < results.length; i++) {
+            results[i][sequenceNo] = i - pageSize + pageSize * pageIndex + 1;
+          }
+        } else {
+          for (let i = 0; i < results.length; i++) {
+            results[i][sequenceNo] = i - pageSize + pageSize * pageIndex + 1 - (pageSize - initPageSize);
+          }
         }
       } else {
         for (let i = 0; i < results.length; i++) {
-          results[i][sequenceNo] = i - pageSize + pageSize * pageIndex + 1 - (pageSize - initPageSize);
+          results[i][sequenceNo] = i + 1;
         }
       }
     }
