@@ -205,7 +205,7 @@ export function showResults<T>(s: SearchModel, sr: SearchResult<T>, com: Paginat
   if (sr.total) {
     com.itemTotal = sr.total;
   }
-  if (com.appendMode === false) {
+  if (!com.appendMode) {
     showPaging(s, sr, com);
   } else {
     handleAppend(s, sr, com);
@@ -559,7 +559,7 @@ function getModelFromState(state: any, modelName: string): any {
   return state[modelName];
 }
 export function getDisplayFieldsFromForm(displayFields: string[], initDisplayFields?: boolean, form?: HTMLFormElement): string[] {
-  if (displayFields) {
+  if (displayFields && displayFields.length > 0) {
     return displayFields;
   }
   if (!initDisplayFields) {
