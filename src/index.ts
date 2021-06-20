@@ -541,7 +541,7 @@ export function getModel<T, S extends SearchModel>(state: any, modelName: string
   obj3.excluding = excluding;
   if (keys && keys.length === 1) {
     if (l && l.length > 0) {
-      const refId = l[l.length - 1][this.keys[0]];
+      const refId = l[l.length - 1][keys[0]];
       if (refId) {
         obj3.refId = '' + refId;
       }
