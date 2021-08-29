@@ -9,11 +9,6 @@ export interface SearchModel {
   fields?: string[];
   sort?: string;
 }
-export interface SearchResult<T> {
-  total?: number;
-  results: T[];
-  last?: boolean;
-}
 export interface Locale {
   id?: string;
   countryCode: string;
@@ -200,18 +195,18 @@ export function append<T>(list: T[], results: T[]): T[] {
   }
   return list;
 }
-export function showResults<T>(s: SearchModel, sr: SearchResult<T>, com: Pagination): void {
+export function showResults<T>(com: Pagination, s: SearchModel, list: T[], total?: number, last?: boolean): void {
   com.pageIndex = (s.page && s.page >= 1 ? s.page : 1);
-  if (sr.total) {
-    com.itemTotal = sr.total;
+  if (total) {
+    com.itemTotal = total;
   }
   if (!com.appendMode) {
-    showPaging(s, sr, com);
+    showPaging(com, s.limit, list, total);
   } else {
-    handleAppend(s, sr, com);
+    handleAppend(com, s, list, last);
   }
 }
-export function handleAppend<T, S extends SearchModel>(s: S, sr: SearchResult<T>, com: Pagination): void {
+export function handleAppend<T, S extends SearchModel>(com: Pagination, s: S, list: T[], last?: boolean): void {
   if (s.limit === 0) {
     com.appendable = false;
   } else {
@@ -219,21 +214,21 @@ export function handleAppend<T, S extends SearchModel>(s: S, sr: SearchResult<T>
     if (s.page <= 1) {
       pageSize = s.firstLimit;
     }
-    if (sr.last === true || sr.results.length < pageSize) {
+    if (last === true || list.length < pageSize) {
       com.appendable = false;
     } else {
       com.appendable = true;
     }
   }
-  if (sr && sr.results.length === 0) {
+  if (!list || list.length === 0) {
     com.appendable = false;
   }
 }
-export function showPaging<T>(s: SearchModel, sr: SearchResult<T>, com: Pagination): void {
-  com.itemTotal = sr.total;
-  const pageTotal = getPageTotal(sr.total, s.limit);
+export function showPaging<T>(com: Pagination, pageSize: number, list: T[], total?: number): void {
+  com.itemTotal = total;
+  const pageTotal = getPageTotal(pageSize, total);
   com.pageTotal = pageTotal;
-  com.showPaging = (com.pageTotal <= 1 || (sr.results && sr.results.length >= sr.total) ? false : true);
+  com.showPaging = (com.pageTotal <= 1 || (list && list.length >= total) ? false : true);
 }
 
 export function getDisplayFields(form: HTMLFormElement): string[] {
@@ -323,30 +318,32 @@ export function formatResults<T>(results: T[], pageIndex: number, pageSize: numb
   }
 }
 
-export function getPageTotal(recordTotal: number, pageSize: number): number {
-  if (pageSize <= 0) {
+export function getPageTotal(pageSize: number, total?: number): number {
+  if (!pageSize || pageSize <= 0) {
     return 1;
   } else {
-    if ((recordTotal % pageSize) === 0) {
-      return Math.floor((recordTotal / pageSize));
+    if (!total) {
+      total = 0;
     }
-    return Math.floor((recordTotal / pageSize) + 1);
+    if ((total % pageSize) === 0) {
+      return Math.floor((total / pageSize));
+    }
+    return Math.floor((total / pageSize) + 1);
   }
 }
 
-export function buildSearchMessage<T>(s: SearchModel, sr: SearchResult<T>, r: ResourceService): string {
-  const results = sr.results;
+export function buildSearchMessage<T>(r: ResourceService, pageIndex: number, pageSize: number, results: T[], total?: number): string {
   if (!results || results.length === 0) {
     return r.value('msg_no_data_found');
   } else {
-    if (!s.page) {
-      s.page = 1;
+    if (!pageIndex) {
+      pageIndex = 1;
     }
-    const fromIndex = (s.page - 1) * s.limit + 1;
+    const fromIndex = (pageIndex - 1) * pageSize + 1;
     const toIndex = fromIndex + results.length - 1;
-    const pageTotal = getPageTotal(sr.total, s.limit);
+    const pageTotal = getPageTotal(pageSize, total);
     if (pageTotal > 1) {
-      const msg2 = r.format(r.value('msg_search_result_page_sequence'), fromIndex, toIndex, sr.total, s.page, pageTotal);
+      const msg2 = r.format(r.value('msg_search_result_page_sequence'), fromIndex, toIndex, total, pageIndex, pageTotal);
       return msg2;
     } else {
       const msg3 = r.format(r.value('msg_search_result_sequence'), fromIndex, toIndex);
@@ -361,8 +358,14 @@ function removeFormatUrl(url: string): string {
 }
 
 
-export function addParametersIntoUrl<S extends SearchModel>(searchModel: S, isFirstLoad: boolean): void {
+export function addParametersIntoUrl<S extends SearchModel>(searchModel: S, isFirstLoad?: boolean, fields?: string, limit?: string): void {
   if (!isFirstLoad) {
+    if (!fields || fields.length === 0) {
+      fields = 'fields';
+    }
+    if (!limit || limit.length === 0) {
+      limit = 'limit';
+    }
     const pageIndex = searchModel.page;
     if (pageIndex && !isNaN(pageIndex) && pageIndex <= 1) {
       delete searchModel.page;
@@ -373,9 +376,9 @@ export function addParametersIntoUrl<S extends SearchModel>(searchModel: S, isFi
     for (const key of keys) {
       const objValue = searchModel[key];
       if (objValue) {
-        if (key !== 'fields') {
+        if (key !== fields) {
           if (typeof objValue === 'string' || typeof objValue === 'number') {
-            if (key === 'limit') {
+            if (key === limit) {
               // tslint:disable-next-line:triple-equals
               if (objValue != resources.limit) {
                 if (url.indexOf('?') === -1) {
