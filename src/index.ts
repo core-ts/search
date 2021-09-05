@@ -195,26 +195,28 @@ export function append<T>(list: T[], results: T[]): T[] {
   }
   return list;
 }
-export function showResults<T>(com: Pagination, s: SearchModel, list: T[], total?: number, last?: boolean): void {
+/*
+export function showResults<T>(com: Pagination, s: SearchModel, list: T[], total?: number, nextPageToken?: string): void {
   com.pageIndex = (s.page && s.page >= 1 ? s.page : 1);
   if (total) {
     com.itemTotal = total;
   }
-  if (!com.appendMode) {
-    showPaging(com, s.limit, list, total);
+  if (com.appendMode) {
+    let limit = s.limit;
+    if (s.page <= 1 && s.firstLimit && s.firstLimit > 0) {
+      limit = s.firstLimit;
+    }
+    handleAppend(com, limit, list, nextPageToken);
   } else {
-    handleAppend(com, s, list, last);
+    showPaging(com, s.limit, list, total);
   }
 }
-export function handleAppend<T, S extends SearchModel>(com: Pagination, s: S, list: T[], last?: boolean): void {
-  if (s.limit === 0) {
+*/
+export function handleAppend<T>(com: Pagination, limit: number, list: T[], nextPageToken?: string): void {
+  if (limit === 0) {
     com.appendable = false;
   } else {
-    let pageSize = s.limit;
-    if (s.page <= 1) {
-      pageSize = s.firstLimit;
-    }
-    if (last === true || list.length < pageSize) {
+    if (!nextPageToken || nextPageToken.length === 0 || list.length < limit) {
       com.appendable = false;
     } else {
       com.appendable = true;
