@@ -2,7 +2,7 @@
 export class resources {
   static limit = 20;
 }
-export interface SearchModel {
+export interface Filter {
   page?: number;
   limit?: number;
   firstLimit?: number;
@@ -48,7 +48,7 @@ export interface Pagination {
 export interface Searchable extends Pagination, Sortable {
 }
 
-export function mergeSearchModel<S extends SearchModel>(obj: S, b?: S, pageSizes?: number[], arrs?: string[]|any) {
+export function mergeFilter<S extends Filter>(obj: S, b?: S, pageSizes?: number[], arrs?: string[]|any) {
   let a: any = b;
   if (!b) {
     a = {};
@@ -97,7 +97,7 @@ export function isArray(key: string, p: any, arrs: string[]|any): boolean {
 }
 
 // m is search model or an object which is parsed from url
-export function initSearchable<S extends SearchModel>(m: S, com: Searchable): S {
+export function initFilter<S extends Filter>(m: S, com: Searchable): S {
   if (!isNaN(m.page)) {
     const page = parseInt(m.page as any, 10);
     m.page = page;
@@ -138,9 +138,9 @@ export function initSearchable<S extends SearchModel>(m: S, com: Searchable): S 
     }
   }
   /*
-  delete searchModel.page;
-  delete searchModel.limit;
-  delete searchModel.firstLimit;
+  delete m.page;
+  delete m.limit;
+  delete m.firstLimit;
   */
   return m;
 }
@@ -166,8 +166,8 @@ export function changePage(com: Pagination, pageIndex: number, pageSize: number)
   com.pageSize = pageSize;
   com.append = false;
 }
-export function optimizeSearchModel<S extends SearchModel>(obj: S, searchable: Searchable, displayFields: string[]): S {
-  obj.fields = displayFields;
+export function optimizeFilter<S extends Filter>(obj: S, searchable: Searchable, fields: string[]): S {
+  obj.fields = fields;
   if (searchable.pageIndex && searchable.pageIndex > 1) {
     obj.page = searchable.pageIndex;
   } else {
@@ -196,7 +196,7 @@ export function append<T>(list: T[], results: T[]): T[] {
   return list;
 }
 /*
-export function showResults<T>(com: Pagination, s: SearchModel, list: T[], total?: number, nextPageToken?: string): void {
+export function showResults<T>(com: Pagination, s: Filter, list: T[], total?: number, nextPageToken?: string): void {
   com.pageIndex = (s.page && s.page >= 1 ? s.page : 1);
   if (total) {
     com.itemTotal = total;
@@ -233,7 +233,7 @@ export function showPaging<T>(com: Pagination, pageSize: number, list: T[], tota
   com.showPaging = (com.pageTotal <= 1 || (list && list.length >= total) ? false : true);
 }
 
-export function getDisplayFields(form: HTMLFormElement): string[] {
+export function getFields(form: HTMLFormElement): string[] {
   let nodes = form.nextSibling as HTMLElement;
   if (!nodes.querySelector) {
     nodes = form.nextSibling.nextSibling as HTMLElement;
@@ -334,7 +334,7 @@ export function getPageTotal(pageSize: number, total?: number): number {
   }
 }
 
-export function buildSearchMessage<T>(r: ResourceService, pageIndex: number, pageSize: number, results: T[], total?: number): string {
+export function buildMessage<T>(r: ResourceService, pageIndex: number, pageSize: number, results: T[], total?: number): string {
   if (!results || results.length === 0) {
     return r.value('msg_no_data_found');
   } else {
@@ -360,7 +360,7 @@ function removeFormatUrl(url: string): string {
 }
 
 
-export function addParametersIntoUrl<S extends SearchModel>(searchModel: S, isFirstLoad?: boolean, fields?: string, limit?: string): void {
+export function addParametersIntoUrl<S extends Filter>(ft: S, isFirstLoad?: boolean, fields?: string, limit?: string): void {
   if (!isFirstLoad) {
     if (!fields || fields.length === 0) {
       fields = 'fields';
@@ -368,15 +368,15 @@ export function addParametersIntoUrl<S extends SearchModel>(searchModel: S, isFi
     if (!limit || limit.length === 0) {
       limit = 'limit';
     }
-    const pageIndex = searchModel.page;
+    const pageIndex = ft.page;
     if (pageIndex && !isNaN(pageIndex) && pageIndex <= 1) {
-      delete searchModel.page;
+      delete ft.page;
     }
-    const keys = Object.keys(searchModel);
+    const keys = Object.keys(ft);
     const currentUrl = window.location.host + window.location.pathname;
     let url = removeFormatUrl(currentUrl);
     for (const key of keys) {
-      const objValue = searchModel[key];
+      const objValue = ft[key];
       if (objValue) {
         if (key !== fields) {
           if (typeof objValue === 'string' || typeof objValue === 'number') {
@@ -536,13 +536,13 @@ export function toggleSortStyle(target: HTMLElement): string {
   }
   return field;
 }
-export function getModel<T, S extends SearchModel>(state: any, modelName: string, searchable: Searchable, fields: string[], excluding: any, keys?: string[], l?: T[], f?: HTMLFormElement, dc?: (f2: HTMLFormElement, lc2?: Locale, cc?: string) => any, lc?: Locale, currencyCode?: string): S {
+export function getModel<T, S extends Filter>(state: any, modelName: string, searchable: Searchable, fields: string[], excluding: any, keys?: string[], l?: T[], f?: HTMLFormElement, dc?: (f2: HTMLFormElement, lc2?: Locale, cc?: string) => any, lc?: Locale, currencyCode?: string): S {
   let obj2 = getModelFromState(state, modelName);
   if (f && dc) {
     obj2 = dc(f, lc, currencyCode);
   }
   const obj: any = obj2 ? obj2 : {};
-  const obj3 = optimizeSearchModel(obj, searchable, fields);
+  const obj3 = optimizeFilter(obj, searchable, fields);
   obj3.excluding = excluding;
   if (keys && keys.length === 1) {
     if (l && l.length > 0) {
@@ -563,18 +563,18 @@ function getModelFromState(state: any, modelName: string): any {
   }
   return state[modelName];
 }
-export function getDisplayFieldsFromForm(displayFields: string[], initDisplayFields?: boolean, form?: HTMLFormElement): string[] {
+export function getFieldsFromForm(displayFields: string[], initFields?: boolean, form?: HTMLFormElement): string[] {
   if (displayFields && displayFields.length > 0) {
     return displayFields;
   }
-  if (!initDisplayFields) {
+  if (!initFields) {
     if (form) {
-      displayFields = getDisplayFields(form);
+      displayFields = getFields(form);
     }
   }
   return displayFields;
 }
-export function validate<S extends SearchModel>(se: S, callback: () => void, form?: HTMLFormElement, lc?: Locale, vf?: (f: HTMLFormElement, lc2?: Locale, focus?: boolean, scr?: boolean) => boolean): void {
+export function validate<S extends Filter>(se: S, callback: () => void, form?: HTMLFormElement, lc?: Locale, vf?: (f: HTMLFormElement, lc2?: Locale, focus?: boolean, scr?: boolean) => boolean): void {
   let valid = true;
   if (form && vf) {
     valid = vf(form, lc);
