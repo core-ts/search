@@ -68,7 +68,7 @@ export function mergeFilter<S extends Filter>(obj: S, b?: S, pageSizes?: number[
   const keys = Object.keys(obj);
   for (const key of keys) {
     const p = a[key];
-    const v = obj[key];
+    const v = (obj as any)[key];
     if (v && v !== '') {
       a[key] = (isArray(key, p, arrs) ? v.split(',') : v);
     }
@@ -98,14 +98,14 @@ export function isArray(key: string, p: any, arrs: string[]|any): boolean {
 
 // m is search model or an object which is parsed from url
 export function initFilter<S extends Filter>(m: S, com: Searchable): S {
-  if (!isNaN(m.page)) {
+  if (!isNaN(m.page as any)) {
     const page = parseInt(m.page as any, 10);
     m.page = page;
     if (page >= 1) {
       com.pageIndex = page;
     }
   }
-  if (!isNaN(m.limit)) {
+  if (!isNaN(m.limit as any)) {
     const pageSize = parseInt(m.limit as any, 10);
     m.limit = pageSize;
     if (pageSize > 0) {
@@ -115,7 +115,7 @@ export function initFilter<S extends Filter>(m: S, com: Searchable): S {
   if (!m.limit && com.pageSize) {
     m.limit = com.pageSize;
   }
-  if (!isNaN(m.firstLimit)) {
+  if (!isNaN(m.firstLimit as any)) {
     const initPageSize = parseInt(m.firstLimit as any, 10);
     if (initPageSize > 0) {
       m.firstLimit = initPageSize;
@@ -146,13 +146,17 @@ export function initFilter<S extends Filter>(m: S, com: Searchable): S {
 }
 export function more(com: Pagination): void {
   com.append = true;
-  com.pageIndex = com.pageIndex + 1;
+  if (!com.pageIndex) {
+    com.pageIndex = 1;  
+  } else {
+    com.pageIndex = com.pageIndex + 1;
+  }
 }
 
 export function reset(com: Searchable): void {
   removeSortStatus(com.sortTarget);
-  com.sortTarget = null;
-  com.sortField = null;
+  com.sortTarget = undefined;
+  com.sortField = undefined;
   com.append = false;
   com.pageIndex = 1;
 }
@@ -230,13 +234,17 @@ export function showPaging<T>(com: Pagination, pageSize: number, list: T[], tota
   com.itemTotal = total;
   const pageTotal = getPageTotal(pageSize, total);
   com.pageTotal = pageTotal;
-  com.showPaging = (com.pageTotal <= 1 || (list && list.length >= total) ? false : true);
+  com.showPaging = (!total || com.pageTotal <= 1 || (list && list.length >= total) ? false : true);
 }
 
 export function getFields(form: HTMLFormElement): string[] {
   let nodes = form.nextSibling as HTMLElement;
   if (!nodes.querySelector) {
-    nodes = form.nextSibling.nextSibling as HTMLElement;
+    if (!form.nextSibling) {
+      return [];
+    } else {
+      nodes = form.nextSibling.nextSibling as HTMLElement;
+    }
   }
   if (!nodes.querySelector) {
     return [];
@@ -266,18 +274,18 @@ interface Component<T> {
   pageSize?: number;
   initPageSize?: number;
   sequenceNo?: string;
-  format?: (oj: T, lc: Locale) => T;
+  format?: (oj: T, lc?: Locale) => T;
 }
 export function formatResultsByComponent<T>(results: T[], c: Component<T>, lc: Locale) {
   formatResults(results, c.pageIndex, c.pageSize, c.initPageSize, c.sequenceNo, c.format, lc);
 }
-export function formatResults<T>(results: T[], pageIndex: number, pageSize: number, initPageSize: number, sequenceNo?: string, ft?: (oj: T, lc: Locale) => T, lc?: Locale): void {
+export function formatResults<T>(results: T[], pageIndex?: number, pageSize?: number, initPageSize?: number, sequenceNo?: string, ft?: (oj: T, lc?: Locale) => T, lc?: Locale): void {
   if (results && results.length > 0) {
     let hasSequencePro = false;
     if (ft) {
       if (sequenceNo && sequenceNo.length > 0) {
         for (const obj of results) {
-          if (obj[sequenceNo]) {
+          if ((obj as any)[sequenceNo]) {
             hasSequencePro = true;
           }
           ft(obj, lc);
@@ -289,7 +297,7 @@ export function formatResults<T>(results: T[], pageIndex: number, pageSize: numb
       }
     } else if (sequenceNo && sequenceNo.length > 0) {
       for (const obj of results) {
-        if (obj[sequenceNo]) {
+        if ((obj as any)[sequenceNo]) {
           hasSequencePro = true;
         }
       }
@@ -304,16 +312,16 @@ export function formatResults<T>(results: T[], pageIndex: number, pageSize: numb
         }
         if (pageIndex <= 1) {
           for (let i = 0; i < results.length; i++) {
-            results[i][sequenceNo] = i - pageSize + pageSize * pageIndex + 1;
+            (results[i] as any)[sequenceNo] = i - pageSize + pageSize * pageIndex + 1;
           }
         } else {
           for (let i = 0; i < results.length; i++) {
-            results[i][sequenceNo] = i - pageSize + pageSize * pageIndex + 1 - (pageSize - initPageSize);
+            (results[i] as any)[sequenceNo] = i - pageSize + pageSize * pageIndex + 1 - (pageSize - initPageSize);
           }
         }
       } else {
         for (let i = 0; i < results.length; i++) {
-          results[i][sequenceNo] = i + 1;
+          (results[i] as any)[sequenceNo] = i + 1;
         }
       }
     }
@@ -376,7 +384,7 @@ export function addParametersIntoUrl<S extends Filter>(ft: S, isFirstLoad?: bool
     const currentUrl = window.location.host + window.location.pathname;
     let url = removeFormatUrl(currentUrl);
     for (const key of keys) {
-      const objValue = ft[key];
+      const objValue = (ft as any)[key];
       if (objValue) {
         if (key !== fields) {
           if (typeof objValue === 'string' || typeof objValue === 'number') {
@@ -457,8 +465,8 @@ export function addParametersIntoUrl<S extends Filter>(ft: S, isFirstLoad?: bool
 }
 
 export interface Sort {
-  field: string;
-  type: string;
+  field?: string;
+  type?: string;
 }
 
 export function handleSortEvent(event: Event, com: Sortable): void {
@@ -471,17 +479,17 @@ export function handleSortEvent(event: Event, com: Sortable): void {
   }
 }
 
-export function handleSort(target: HTMLElement, previousTarget: HTMLElement, sortField: string, sortType: string): Sort {
+export function handleSort(target: HTMLElement, previousTarget?: HTMLElement, sortField?: string, sortType?: string): Sort {
   const type = target.getAttribute('sort-type');
   const field = toggleSortStyle(target);
-  const s = sort(sortField, sortType, field, type);
+  const s = sort(sortField, sortType, field, type == null ? undefined : type);
   if (sortField !== field) {
     removeSortStatus(previousTarget);
   }
   return s;
 }
 
-export function sort(preField: string, preSortType: string, field: string, sortType: string): Sort {
+export function sort(preField?: string, preSortType?: string, field?: string, sortType?: string): Sort {
   if (!preField || preField === '') {
     const s: Sort = {
       field,
@@ -498,10 +506,12 @@ export function sort(preField: string, preSortType: string, field: string, sortT
     const type = (preSortType === '+' ? '-' : '+');
     const s: Sort = {field, type};
     return s;
+  } else {
+    return {field, type: sortType};
   }
 }
 
-export function removeSortStatus(target: HTMLElement): void {
+export function removeSortStatus(target?: HTMLElement): void {
   if (target && target.children.length > 0) {
     target.removeChild(target.children[0]);
   }
@@ -546,7 +556,7 @@ export function getModel<T, S extends Filter>(state: any, modelName: string, sea
   obj3.excluding = excluding;
   if (keys && keys.length === 1) {
     if (l && l.length > 0) {
-      const refId = l[l.length - 1][keys[0]];
+      const refId = (l[l.length - 1] as any)[keys[0]];
       if (refId) {
         obj3.refId = '' + refId;
       }
