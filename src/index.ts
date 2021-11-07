@@ -147,7 +147,7 @@ export function initFilter<S extends Filter>(m: S, com: Searchable): S {
 export function more(com: Pagination): void {
   com.append = true;
   if (!com.pageIndex) {
-    com.pageIndex = 1;  
+    com.pageIndex = 1;
   } else {
     com.pageIndex = com.pageIndex + 1;
   }
@@ -170,7 +170,7 @@ export function changePage(com: Pagination, pageIndex: number, pageSize: number)
   com.pageSize = pageSize;
   com.append = false;
 }
-export function optimizeFilter<S extends Filter>(obj: S, searchable: Searchable, fields: string[]): S {
+export function optimizeFilter<S extends Filter>(obj: S, searchable: Searchable, fields?: string[]): S {
   obj.fields = fields;
   if (searchable.pageIndex && searchable.pageIndex > 1) {
     obj.page = searchable.pageIndex;
@@ -191,11 +191,14 @@ export function optimizeFilter<S extends Filter>(obj: S, searchable: Searchable,
   return obj;
 }
 
-export function append<T>(list: T[], results: T[]): T[] {
+export function append<T>(list?: T[], results?: T[]): T[] {
   if (list && results) {
     for (const obj of results) {
       list.push(obj);
     }
+  }
+  if (!list) {
+    return [];
   }
   return list;
 }
@@ -216,8 +219,8 @@ export function showResults<T>(com: Pagination, s: Filter, list: T[], total?: nu
   }
 }
 */
-export function handleAppend<T>(com: Pagination, limit: number, list: T[], nextPageToken?: string): void {
-  if (limit === 0) {
+export function handleAppend<T>(com: Pagination, list: T[], limit?: number, nextPageToken?: string): void {
+  if (!limit || limit === 0) {
     com.appendable = false;
   } else {
     if (!nextPageToken || nextPageToken.length === 0 || list.length < limit) {
@@ -230,14 +233,17 @@ export function handleAppend<T>(com: Pagination, limit: number, list: T[], nextP
     com.appendable = false;
   }
 }
-export function showPaging<T>(com: Pagination, pageSize: number, list: T[], total?: number): void {
+export function showPaging<T>(com: Pagination, list: T[], pageSize?: number, total?: number): void {
   com.itemTotal = total;
   const pageTotal = getPageTotal(pageSize, total);
   com.pageTotal = pageTotal;
   com.showPaging = (!total || com.pageTotal <= 1 || (list && list.length >= total) ? false : true);
 }
 
-export function getFields(form: HTMLFormElement): string[] {
+export function getFields(form?: HTMLFormElement): string[]|undefined {
+  if (!form) {
+    return undefined;
+  }
   let nodes = form.nextSibling as HTMLElement;
   if (!nodes.querySelector) {
     if (!form.nextSibling) {
@@ -328,7 +334,7 @@ export function formatResults<T>(results: T[], pageIndex?: number, pageSize?: nu
   }
 }
 
-export function getPageTotal(pageSize: number, total?: number): number {
+export function getPageTotal(pageSize?: number, total?: number): number {
   if (!pageSize || pageSize <= 0) {
     return 1;
   } else {
@@ -342,7 +348,7 @@ export function getPageTotal(pageSize: number, total?: number): number {
   }
 }
 
-export function buildMessage<T>(r: ResourceService, pageIndex: number, pageSize: number, results: T[], total?: number): string {
+export function buildMessage<T>(r: ResourceService, pageIndex: number|undefined, pageSize: number, results: T[], total?: number): string {
   if (!results || results.length === 0) {
     return r.value('msg_no_data_found');
   } else {
@@ -573,13 +579,13 @@ function getModelFromState(state: any, modelName: string): any {
   }
   return state[modelName];
 }
-export function getFieldsFromForm(displayFields: string[], initFields?: boolean, form?: HTMLFormElement): string[] {
+export function getFieldsFromForm(displayFields: string[], initFields?: boolean, form?: HTMLFormElement): string[]|undefined {
   if (displayFields && displayFields.length > 0) {
     return displayFields;
   }
   if (!initFields) {
     if (form) {
-      displayFields = getFields(form);
+      return getFields(form);
     }
   }
   return displayFields;
