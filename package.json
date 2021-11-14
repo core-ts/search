@@ -1,7 +1,7 @@
 {
-  "name": "search-utilities",
-  "version": "0.0.14",
-  "description": "search utilities",
+  "name": "search-core",
+  "version": "0.1.0",
+  "description": "search core",
   "main": "./lib/index.js",
   "types": "./src/index.ts",
   "scripts": {
@@ -17,10 +17,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com/core-ts/search-utilities"
+    "url": "git@github.com/core-ts/search"
   },
   "keywords": [
     "search",
+    "search-core",
+    "search core",
     "search-utilities",
     "search utilities"
   ]

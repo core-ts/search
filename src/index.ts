@@ -552,7 +552,7 @@ export function toggleSortStyle(target: HTMLElement): string {
   }
   return field;
 }
-export function getModel<T, S extends Filter>(state: any, modelName: string, searchable: Searchable, fields: string[], excluding: any, keys?: string[], l?: T[], f?: HTMLFormElement, dc?: (f2: HTMLFormElement, lc2?: Locale, cc?: string) => any, lc?: Locale, currencyCode?: string): S {
+export function getModel<T, S extends Filter>(state: any, modelName: string, searchable: Searchable, fields?: string[], excluding?: string[]|number[], keys?: string[], l?: T[], f?: HTMLFormElement|null, dc?: (f2: HTMLFormElement, lc2?: Locale, cc?: string) => any, lc?: Locale, currencyCode?: string): S {
   let obj2 = getModelFromState(state, modelName);
   if (f && dc) {
     obj2 = dc(f, lc, currencyCode);
@@ -579,18 +579,18 @@ function getModelFromState(state: any, modelName: string): any {
   }
   return state[modelName];
 }
-export function getFieldsFromForm(displayFields: string[], initFields?: boolean, form?: HTMLFormElement): string[]|undefined {
-  if (displayFields && displayFields.length > 0) {
-    return displayFields;
+export function getFieldsFromForm(fields?: string[], initFields?: boolean, form?: HTMLFormElement|null): string[]|undefined {
+  if (fields && fields.length > 0) {
+    return fields;
   }
   if (!initFields) {
     if (form) {
       return getFields(form);
     }
   }
-  return displayFields;
+  return fields;
 }
-export function validate<S extends Filter>(se: S, callback: () => void, form?: HTMLFormElement, lc?: Locale, vf?: (f: HTMLFormElement, lc2?: Locale, focus?: boolean, scr?: boolean) => boolean): void {
+export function validate<S extends Filter>(se: S, callback: () => void, form?: HTMLFormElement|null, lc?: Locale, vf?: (f: HTMLFormElement, lc2?: Locale, focus?: boolean, scr?: boolean) => boolean): void {
   let valid = true;
   if (form && vf) {
     valid = vf(form, lc);
