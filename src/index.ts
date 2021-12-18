@@ -1,6 +1,6 @@
 // tslint:disable-next-line:class-name
 export class resources {
-  static limit = 20;
+  static limit = 24;
 }
 export interface Filter {
   page?: number;
@@ -37,8 +37,8 @@ export interface Pagination {
   initPageSize?: number;
   pageSize?: number;
   pageIndex?: number;
-  itemTotal?: number;
-  pageTotal?: number;
+  total?: number;
+  pages?: number;
   showPaging?: boolean;
   append?: boolean;
   appendMode?: boolean;
@@ -234,10 +234,10 @@ export function handleAppend<T>(com: Pagination, list: T[], limit?: number, next
   }
 }
 export function showPaging<T>(com: Pagination, list: T[], pageSize?: number, total?: number): void {
-  com.itemTotal = total;
+  com.total = total;
   const pageTotal = getPageTotal(pageSize, total);
-  com.pageTotal = pageTotal;
-  com.showPaging = (!total || com.pageTotal <= 1 || (list && list.length >= total) ? false : true);
+  com.pages = pageTotal;
+  com.showPaging = (!total || com.pages <= 1 || (list && list.length >= total) ? false : true);
 }
 
 export function getFields(form?: HTMLFormElement): string[]|undefined {
@@ -283,7 +283,7 @@ interface Component<T> {
   format?: (oj: T, lc?: Locale) => T;
 }
 export function formatResultsByComponent<T>(results: T[], c: Component<T>, lc: Locale) {
-  formatResults(results, c.pageIndex, c.pageSize, c.initPageSize, c.sequenceNo, c.format, lc);
+  formatResults(results, c.pageIndex, c.pageSize, c.pageSize, c.sequenceNo, c.format, lc);
 }
 export function formatResults<T>(results: T[], pageIndex?: number, pageSize?: number, initPageSize?: number, sequenceNo?: string, ft?: (oj: T, lc?: Locale) => T, lc?: Locale): void {
   if (results && results.length > 0) {
